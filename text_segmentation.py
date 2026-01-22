@@ -1,5 +1,8 @@
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk import PorterStemmer,bigrams
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 import regex as re
 
 def stem_dict(dictionary):
@@ -164,17 +167,17 @@ ordered_heading_document = {
     k:v for k,v in sorted(heading_document.items(), key=lambda item:item[1])
 }
 
-print(ordered_heading_document)
+#print(ordered_heading_document)
 
 segmented_resume = {}
 indexes = [v for k,v in ordered_heading_document.items()]
-print(indexes)
+#print(indexes)
 list_of_hd = list(ordered_heading_document.items())
 
 for i in range(len(list_of_hd)):
     start = list_of_hd[i][1]
     end = list_of_hd[i+1][1] if (i<len(list_of_hd)-1) else len(new_list)
-    print(start,end)
+    #print(start,end)
     segment = [j[1] for j in new_list if (start<j[0] and j[0]<end)]
     segmented_resume[list_of_hd[i][0]] = segment
 # for key,index in zip(list(ordered_heading_document.items())):
@@ -187,4 +190,79 @@ for i in range(len(list_of_hd)):
 #     print(start,end)
 #     segment = [j[1] for j in new_list if (start<j[0] and j[0]<end)]
 #     segmented_resume[key] = segment
-print(segmented_resume)
+#print(segmented_resume)
+
+# Job Description
+
+jd = """
+Job brief
+We’re seeking a talented Senior Software Developer to join our dynamic team and contribute to developing the best recruiting software in the world.
+
+In this role, you’ll use your expertise in Node.js, SQL, and JavaScript to build and enhance web applications that meet our growing user base’s needs.
+
+You’ll be part of a culture that values good engineering, innovation, and customer-centric design. Whether working on mobile applications, natural language processing, or data science, you’ll have the opportunity to make significant contributions across various areas of our product.
+
+Join us to shape the future of recruiting software by delivering solutions that are not only robust and scalable but also deliver an exceptional user experience.
+
+Responsibilities
+Design and develop commercial/enterprise web applications
+Ensure application performance, quality, and responsiveness
+Work with relational and non-relational databases, proficiently using SQL
+Collaborate with different teams, from core application development to integrations and data science
+Test software through unit and integration tests
+Continuously learn and adapt to new technologies and programming languages
+Requirements and skills
+3+ years of experience in building web applications using Node.js
+Strong background in both relational and non-relational databases, with proficiency in SQL
+Solid experience in JavaScript and the Node.js ecosystem
+Ability to select and use the most appropriate tools, technologies, and languages for the job
+Team-oriented, with a willingness to work as part of a collaborative environment
+Skilled in software testing methodologies
+A relevant B.Sc./B.A. degree in Computer Science, Engineering, or equivalent
+Extra credit for experience with full-text search engines
+"""
+
+JD_sentences = [i.lower() for i in jd.split('\n') if i!='']
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+embeddings = model.encode(JD_sentences)
+JD_embeddings = {}
+for i in range(len(embeddings)):
+    JD_embeddings[i] = embeddings[i]
+semantic_bucket = [
+    "this section summarizes the role and the kind of candidate the company is seeking",
+    "this section describes the tasks, duties, and responsibilities the candidate will perform in the role",
+    "this section lists the mandatory technical and non-technical skills required to qualify for the role",
+    "this section describes optional skills or qualifications that provide an advantage but are not mandatory",
+    ]
+semantic_emedding = model.encode(semantic_bucket)
+JD_bucket = {
+    "role_overview": [],
+    "responsibilities": [],
+    "required_skills": [],
+    "nice_to_have": []
+}
+
+for k,v in JD_embeddings.items():
+    sim1 = cosine_similarity(v.reshape(1,-1),semantic_emedding[0].reshape(1,-1))
+    sim2 = cosine_similarity(v.reshape(1,-1),semantic_emedding[1].reshape(1,-1))
+    sim3 = cosine_similarity(v.reshape(1,-1),semantic_emedding[2].reshape(1,-1))
+    sim4 = cosine_similarity(v.reshape(1,-1),semantic_emedding[3].reshape(1,-1))
+    max_sim = max([sim1,sim2,sim3,sim4])
+    if max_sim == sim1:
+        JD_bucket['role_overview'].append(k)
+    elif max_sim == sim2:
+        JD_bucket['responsibilities'].append(k)
+    elif max_sim == sim3:
+        JD_bucket['required_skills'].append(k)
+    else:
+        JD_bucket['nice_to_have'].append(k)
+
+print(JD_bucket)
+
+for k,v in JD_bucket.items():
+    temp_embeding = []
+    for i in v:
+        temp_embeding.append(JD_embeddings[i])
+    JD_bucket[k] = np.mean(temp_embeding,axis=0)
+
+print(JD_bucket.values)
