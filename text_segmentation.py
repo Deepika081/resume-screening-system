@@ -32,40 +32,28 @@ def remove_punctuations(text):
     return cleaned_text
 
 text = """
-Mystery Penguin
-example@email.com
-(555)123-4567
-Edgar Springs, MO
-Summary
-Competent software engineer, able to work effectively in a fast-paced, agile environment, and passionate about developing software architecture for primarily web applications.
-Work Experience
-Software Engineer
-BlueTech Software • Los Angeles, California
-July 2019 - Present
-Researched and created a new application to be used by the company, resulting in a 1.3x increase in sales
-Created a new software development framework to develop applications faster and more efficiently
-Developed the process of testing and recording the results of the test, thereby increasing the number of tests completed per day by 10%
-Developed a new technique for reducing the time it takes to fix crashes by 20%
-Web Developer
-Mezzanine • Los Angeles, California
-May 2018
-Developed a collaborative environment for all team members, creating a strong sense of community and empowerment
-Designed a new web application to increase collaboration among design, engineering and sales teams, resulting in a 10% increase in revenue in one quarter
-Built a custom web application for a major client, successfully delivering an integrated CRM system in just 2 weeks
-Maintained a clean, professional and creative web presence for the company to convey the professional image of the organization
-Used Adobe InDesign to design, edit and layout the company's print & digital collateral
-Software Engineer
-Geeks 4 Nerds • Los Angeles, California
-October 2016
-Designed and implemented a new cloud-based mobile POS platform, resulting in a 50% increase in customer retention
-Collaborated with hardware and software development teams to ensure seamless integration of the new POS system
-Continued to develop specialty skills related to his expertise in mobile POS and payment technologies
-Developed and continuously improved an internal knowledge base of best practices for software development
-Skills
-C, Java, Sdlc, Software Development, Linux, C#, Communication Skills
-Academic Background
-Bachelor's Degree in Computer Science
-Zirkel College • Los Angeles, California
+Summary:
+Frontend-focused engineer with experience in building responsive user interfaces.
+
+Experience:
+Frontend Developer
+CreativeApps Studio
+June 2021 – Present
+- Developed user interfaces using HTML, CSS, and JavaScript
+- Built reusable UI components using React
+- Collaborated with designers to improve user experience
+- Integrated frontend components with backend APIs
+
+Projects:
+- Created a portfolio website using React and Tailwind CSS
+- Built a dashboard for analytics visualization
+
+Skills:
+JavaScript, React, HTML, CSS, UI/UX, Figma, Git
+
+Education:
+Bachelor’s degree in Information Technology
+
 """
 
 stemmer = PorterStemmer()
@@ -195,31 +183,29 @@ for i in range(len(list_of_hd)):
 # Job Description
 
 jd = """
-Job brief
-We’re seeking a talented Senior Software Developer to join our dynamic team and contribute to developing the best recruiting software in the world.
+We are looking for a Software Development Engineer to join our backend team.
 
-In this role, you’ll use your expertise in Node.js, SQL, and JavaScript to build and enhance web applications that meet our growing user base’s needs.
+Role Overview:
+You will be responsible for building scalable backend services and APIs that support millions of users.
 
-You’ll be part of a culture that values good engineering, innovation, and customer-centric design. Whether working on mobile applications, natural language processing, or data science, you’ll have the opportunity to make significant contributions across various areas of our product.
+Responsibilities:
+- Design, develop, and maintain backend services
+- Write clean, efficient, and testable code
+- Collaborate with frontend and product teams
+- Optimize applications for performance and scalability
 
-Join us to shape the future of recruiting software by delivering solutions that are not only robust and scalable but also deliver an exceptional user experience.
+Required Skills:
+- Strong proficiency in Python or Java
+- Experience with REST APIs and backend frameworks
+- Solid understanding of data structures and algorithms
+- Experience with SQL or NoSQL databases
+- Familiarity with Linux and version control systems
 
-Responsibilities
-Design and develop commercial/enterprise web applications
-Ensure application performance, quality, and responsiveness
-Work with relational and non-relational databases, proficiently using SQL
-Collaborate with different teams, from core application development to integrations and data science
-Test software through unit and integration tests
-Continuously learn and adapt to new technologies and programming languages
-Requirements and skills
-3+ years of experience in building web applications using Node.js
-Strong background in both relational and non-relational databases, with proficiency in SQL
-Solid experience in JavaScript and the Node.js ecosystem
-Ability to select and use the most appropriate tools, technologies, and languages for the job
-Team-oriented, with a willingness to work as part of a collaborative environment
-Skilled in software testing methodologies
-A relevant B.Sc./B.A. degree in Computer Science, Engineering, or equivalent
-Extra credit for experience with full-text search engines
+Nice to Have:
+- Experience with cloud platforms (AWS/GCP)
+- Knowledge of Docker or Kubernetes
+- Prior experience in system design
+
 """
 
 JD_sentences = [i.lower() for i in jd.split('\n') if i!='']
@@ -265,4 +251,56 @@ for k,v in JD_bucket.items():
         temp_embeding.append(JD_embeddings[i])
     JD_bucket[k] = np.mean(temp_embeding,axis=0)
 
-print(JD_bucket.values)
+resume_section_embeddings = {}
+
+for k,v in segmented_resume.items():
+    segment_embedding = model.encode(v)
+    resume_section_embeddings[k] = np.mean(segment_embedding,axis=0)
+
+print(resume_section_embeddings['summary'].shape)
+
+# mapping JD_bucket -> resume_sections
+
+mapping_policy = {
+'role_overview' : ['summary'],
+'responsibilities' : ['experience', 'projects'],
+'required_skills' : ['skills', 'experience', 'projects','certifications'],
+'nice_to_have' : ['skills', 'projects', 'certifications']
+}
+
+maximum_sim = {}
+
+for k,v in JD_bucket.items():
+    maximum_sim[k] = max([cosine_similarity(resume_section_embeddings[i].reshape(1,-1),JD_bucket[k].reshape(1,-1))for i in mapping_policy[k] if i in resume_section_embeddings.keys()])[0][0]
+
+print('maximum similarity: ', maximum_sim)
+weights = {
+    'required_skills': 0.45,
+    'responsibilities': 0.25,
+    'role_overview': 0.20,
+    'nice_to_have': 0.10
+}
+
+final_weight = 0
+
+for k,v in maximum_sim.items():
+    #print(type(v))
+    temp_sum = v*weights[k]
+    final_weight += temp_sum
+
+print("Final resume score: ", final_weight)
+
+if final_weight>0.60 and final_weight<1:
+    print('Excellent match')
+elif final_weight>0.45:
+    print('Strong match')
+elif final_weight>0.33:
+    print('Borderline match')
+elif final_weight>0.25:
+    print('Weak match')
+else:
+    print('Poor match')
+
+print('Breakdown')
+for k,v in maximum_sim.items():
+    print(k,':',float(v))
