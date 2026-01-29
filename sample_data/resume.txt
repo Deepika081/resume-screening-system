@@ -1,0 +1,21 @@
+Summary:
+Frontend-focused engineer with experience in building responsive user interfaces.
+
+Experience:
+Frontend Developer
+CreativeApps Studio
+June 2021 – Present
+- Developed user interfaces using HTML, CSS, and JavaScript
+- Built reusable UI components using React
+- Collaborated with designers to improve user experience
+- Integrated frontend components with backend APIs
+
+Projects:
+- Created a portfolio website using React and Tailwind CSS
+- Built a dashboard for analytics visualization
+
+Skills:
+JavaScript, React, HTML, CSS, UI/UX, Figma, Git
+
+Education:
+Bachelor’s degree in Information Technology

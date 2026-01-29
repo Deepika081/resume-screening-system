@@ -1,0 +1,22 @@
+We are looking for a Software Development Engineer to join our backend team.
+
+Role Overview:
+You will be responsible for building scalable backend services and APIs that support millions of users.
+
+Responsibilities:
+- Design, develop, and maintain backend services
+- Write clean, efficient, and testable code
+- Collaborate with frontend and product teams
+- Optimize applications for performance and scalability
+
+Required Skills:
+- Strong proficiency in Python or Java
+- Experience with REST APIs and backend frameworks
+- Solid understanding of data structures and algorithms
+- Experience with SQL or NoSQL databases
+- Familiarity with Linux and version control systems
+
+Nice to Have:
+- Experience with cloud platforms (AWS/GCP)
+- Knowledge of Docker or Kubernetes
+- Prior experience in system design
