@@ -19,14 +19,14 @@ This project implements a resume screening system that compares resumes against 
 ## Usage
 1. Clone the repository and install dependencies
 
-git clone https://github.com/Deepika081/resume-screening-system
-cd resume-screening-system
-pip install -r requirements.txt
+- git clone https://github.com/Deepika081/resume-screening-system
+- cd resume-screening-system
+- pip install -r requirements.txt
 
 2. Add input files
 
-sample_data/resume.txt  
-sample_data/jd.txt  
+- sample_data/resume.txt  
+- sample_data/jd.txt  
 
 3. Run the script
 
