@@ -46,7 +46,7 @@ requirements.txt
 README.md  
 
 ## Notes
-- Cue phrase and cue word dictionaries are extensible
-- Designed for text based resumes
-- PDF or DOC resumes require an additional parsing step
-- Scoring thresholds can be adjusted in the scoring logic
+- Cue phrase and cue word dictionaries are extensible.
+- Designed for text based resumes.
+- PDF or DOC resumes require an additional parsing step.
+- Scoring thresholds can be adjusted in the scoring logic.
