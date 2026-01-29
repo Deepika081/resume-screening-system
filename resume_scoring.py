@@ -1,7 +1,3 @@
-# ================================
-# Imports
-# ================================
-
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk import PorterStemmer, bigrams
 from sentence_transformers import SentenceTransformer
@@ -9,18 +5,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import regex as re
 
-
-# ================================
 # Global objects
-# ================================
 
 stemmer = PorterStemmer()
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-
-# ================================
 # Utility functions
-# ================================
 
 def stem_dict(dictionary):
     stemmed_dict = {}
@@ -48,9 +38,7 @@ def remove_punctuations(text):
     return text.translate(pattern).replace('&', 'and')
 
 
-# ================================
 # Resume preprocessing
-# ================================
 
 def preprocess_resume(text):
     text = remove_bullets(text)
@@ -65,9 +53,7 @@ def preprocess_resume(text):
     return processed_lines
 
 
-# ================================
 # Heading configuration
-# ================================
 
 cue_phrases = {
     "academic background": "education",
@@ -114,14 +100,12 @@ stemmed_cue_phrases = stem_dict(cue_phrases)
 stemmed_cue_words = stem_dict(cue_words)
 
 
-# ================================
 # Heading detection (Scan-1 & Scan-2)
-# ================================
 
 def detect_headings(resume_lines, cue_phrases, cue_words):
     heading_document = {}
 
-    # -------- Scan 1: Bigram-based cue phrase detection --------
+    # Scan 1: Bigram-based cue phrase detection
     all_bigrams = []
     for idx, line in resume_lines:
         tokens = [stemmer.stem(i) for i in line.split()]
@@ -136,7 +120,7 @@ def detect_headings(resume_lines, cue_phrases, cue_words):
                     heading_document[cue_phrases[bg]] = idx
                     break
 
-    # -------- Scan 2: Single-word cue detection --------
+    # Scan 2: Single-word cue detection
     for idx, line in resume_lines:
         tokens = line.split()
         if len(tokens) < 4:
@@ -147,9 +131,7 @@ def detect_headings(resume_lines, cue_phrases, cue_words):
     return dict(sorted(heading_document.items(), key=lambda x: x[1]))
 
 
-# ================================
 # Resume segmentation
-# ================================
 
 def segment_resume(resume_lines, heading_document):
     segmented_resume = {}
@@ -168,9 +150,7 @@ def segment_resume(resume_lines, heading_document):
     return segmented_resume
 
 
-# ================================
 # Job Description semantic bucketing
-# ================================
 
 def bucket_job_description(jd_text):
     jd_sentences = [i.lower() for i in jd_text.split('\n') if i != '']
@@ -206,9 +186,7 @@ def bucket_job_description(jd_text):
     return buckets
 
 
-# ================================
 # Resume–JD matching & scoring
-# ================================
 
 def compute_resume_score(segmented_resume, jd_buckets):
     # Create embeddings for each resume section
@@ -217,7 +195,7 @@ def compute_resume_score(segmented_resume, jd_buckets):
         for section, content in segmented_resume.items()
     }
 
-    # JD → Resume section mapping
+    # JD -> Resume section mapping
     mapping_policy = {
         'role_overview': ['summary'],
         'responsibilities': ['experience', 'projects'],
@@ -225,7 +203,7 @@ def compute_resume_score(segmented_resume, jd_buckets):
         'nice_to_have': ['skills', 'projects', 'certifications']
     }
 
-    # Importance weights
+    # Assigning weights
     weights = {
         'required_skills': 0.45,
         'responsibilities': 0.25,
@@ -255,9 +233,7 @@ def compute_resume_score(segmented_resume, jd_buckets):
         for section in maximum_sim
     )
 
-    # ---------------- Interpretation ----------------
-    print("Final resume score:", round(final_weight, 3))
-
+    # Interpretation
     if 0.60 < final_weight <= 1:
         verdict = "Excellent match"
     elif final_weight > 0.45:
@@ -269,30 +245,19 @@ def compute_resume_score(segmented_resume, jd_buckets):
     else:
         verdict = "Poor match"
 
-    print("Verdict:", verdict)
-
-    # # ---------------- Breakdown ----------------
-    # print("\nBreakdown:")
-    # for section, score in maximum_sim.items():
-    #     print(f"{section}: {round(float(score), 3)}")
-
-    return final_weight, verdict, maximum_sim
+    return round(final_weight,3), verdict, maximum_sim
 
 
-
-#================================
 #Load files
-#================================
 def load_text_file(path):
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-# ================================
-# Main execution
-# ================================
 
-resume_text = load_text_file("resume.txt")
-jd_text = load_text_file("jd.txt")
+# Main code
+
+resume_text = load_text_file("sample_data/resume.txt")
+jd_text = load_text_file("sample_data/jd.txt")
 
 resume_lines = preprocess_resume(resume_text)
 
@@ -308,6 +273,10 @@ jd_buckets = bucket_job_description(jd_text)
 
 final_score, verdict, breakdown = compute_resume_score(segmented_resume, jd_buckets)
 
+
+# Final analysis
+print("Final resume score: ",final_score)
+print("Verdict: ", verdict)
 print("Breakdown:")
 for k, v in breakdown.items():
     print(k, ":",v)
